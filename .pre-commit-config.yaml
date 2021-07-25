@@ -1,0 +1,29 @@
+repos:
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 40716454a285b7a3f63c398f78106fafd5c668e7
+    hooks:
+    -   id: flake8
+-   repo: https://github.com/asottile/reorder_python_imports
+    rev: v1.7.0
+    hooks:
+    -   id: reorder-python-imports
+-   repo: https://github.com/ambv/black
+    rev: stable
+    hooks:
+    - id: black
+      language_version: python3.8
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.1.0
+    hooks:
+    - id: end-of-file-fixer
+    - id: trailing-whitespace
+      exclude: ^tests/fixtures/diffs/
+-   repo: local
+    hooks:
+    -   id: tests
+        name: tests
+        entry: pytest -v
+        language: system
+        pass_filenames: false
+        types: [python]
+        stages: [push]
