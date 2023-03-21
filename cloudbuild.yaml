@@ -1,0 +1,51 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: ['-c', 'docker pull $_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME/$_SERVICE_NAME:latest || exit 0']
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - '--target'
+      - '$_TARGET_IMAGE'
+      #- '-t'
+      #- '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA'
+      - '-t'
+      - '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME/$_SERVICE_NAME:latest'
+      - '-f'
+      - '$_DOCKERFILE'
+      - '--cache-from'
+      - '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME/$_SERVICE_NAME:latest'
+      - .
+    id: Build
+  #- name: gcr.io/cloud-builders/docker
+    #args:
+      #- push
+      #- '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA'
+    #id: Push Specific
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME/$_SERVICE_NAME:latest'
+    id: Push :latest
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    args:
+      - run
+      - services
+      - update
+      - $_SERVICE_NAME
+      - '--platform=managed'
+      #- '--image=$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA'
+      - '--image=$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME/$_SERVICE_NAME:latest'
+      - >-
+        --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=latest,gcb-build-id=$BUILD_ID,gcb-trigger-id=$_TRIGGER_ID,$_LABELS
+      - '--region=$_DEPLOY_REGION'
+      - '--port=$_APP_PORT'
+    id: Deploy
+    entrypoint: gcloud
+images:
+  #- '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA'
+  - '$_GCR_HOSTNAME/$PROJECT_ID/$REPO_NAME/$_SERVICE_NAME:latest'
+options:
+  substitutionOption: ALLOW_LOOSE
+tags:
+  - gcp-cloud-build-deploy-cloud-run
